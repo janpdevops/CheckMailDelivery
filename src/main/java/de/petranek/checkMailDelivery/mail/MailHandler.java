@@ -1,8 +1,11 @@
 package de.petranek.checkMailDelivery.mail;
 
+import de.petranek.checkMailDelivery.monitoring.ExceptingEmail;
 import org.apache.commons.lang3.StringUtils;
 
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Properties;
 import javax.mail.*;
 import javax.mail.internet.InternetAddress;
@@ -15,7 +18,8 @@ public class MailHandler {
         this.properties = properties;
     }
 
-    public void sendEMail() throws Exception{
+
+    public ExceptingEmail sendEMail() throws Exception{
 //Declare recipient's & sender's e-mail id.
         String destmailid = resolveProperty("mbxcheck.receiver");
         String sendrmailid = resolveProperty("mbxcheck.mail.user");
@@ -23,13 +27,7 @@ public class MailHandler {
         final String uname = resolveProperty("mbxcheck.mail.user");
         final String pwd = resolveProperty("mbxcheck.mail.pwd");
 
-//        String smtphost = "mail.gmx.net";
-//        //Set properties and their values
-//        Properties propvls = new Properties();
-//        propvls.put("mail.smtp.auth", "true");
-//        propvls.put("mail.smtp.starttls.enable", "true");
-//        propvls.put("mail.smtp.host", smtphost);
-//        propvls.put("mail.smtp.port", "587");
+
         //Create a Session object & authenticate uid and pwd
         Session sessionobj = Session.getInstance(this.properties,
                 new javax.mail.Authenticator() {
@@ -51,15 +49,18 @@ public class MailHandler {
             messageobj.setText(resolveProperty("mbxcheck.message.content"));
             //Now send the message
             Transport.send(messageobj);
-            System.out.println("Your email sent successfully....");
+            ExceptingEmail exceptingEmail = new ExceptingEmail(subject, now);
+            System.out.println("Your email sent successfully...." + subject);
+            return exceptingEmail;
         } catch (MessagingException exp) {
-            throw new RuntimeException(exp);
+            throw new Exception(exp);
         }
     }
 
 
-    public void getEmail() throws Exception{
+    public List<String> getEmail() throws Exception{
 
+        List<String> received = new ArrayList<>();
         try {
             String hostval = resolveProperty("mbxcheck.pop3.host");
             final String uname = resolveProperty("mbxcheck.mail.user");
@@ -86,17 +87,18 @@ public class MailHandler {
                 System.out.println("Content: " + indvidualmsg.getContent().toString());
                 indvidualmsg.setFlag(Flags.Flag.DELETED, true);
 
+                received.add(indvidualmsg.getSubject());
+
             }
-            //emailFolderObj.expunge();
+
             //Now close all the objects
-            emailFolderObj.close(true);
+            emailFolderObj.close(Boolean.valueOf(resolveProperty("mbxcheck.mail.expunge")));
             storeObj.close();
-        } catch (NoSuchProviderException exp) {
-            exp.printStackTrace();
-        } catch (MessagingException exp) {
-            exp.printStackTrace();
+
+            return received;
         } catch (Exception exp) {
             exp.printStackTrace();
+            throw exp;
         }
 
     }
