@@ -1,35 +1,34 @@
 package de.petranek.checkMailDelivery.mail;
 
 import de.petranek.checkMailDelivery.monitoring.ExceptingEmail;
-import org.apache.commons.lang3.StringUtils;
+import de.petranek.checkMailDelivery.utils.PropertyResolver;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Properties;
 import javax.mail.*;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
 public class MailHandler {
 
-    private final Properties properties;
+    private final PropertyResolver propertyResolver;
 
-    public MailHandler(Properties properties) {
-        this.properties = properties;
+    public MailHandler(PropertyResolver propertyResolver) {
+        this.propertyResolver = propertyResolver;
     }
 
 
     public ExceptingEmail sendEMail() throws Exception{
 //Declare recipient's & sender's e-mail id.
-        String destmailid = resolveProperty("mbxcheck.receiver");
-        String sendrmailid = resolveProperty("mbxcheck.mail.user");
+        String destmailid = propertyResolver.resolveProperty("mbxcheck.receiver");
+        String sendrmailid = propertyResolver.resolveProperty("mbxcheck.mail.user");
         //Mention user name and password as per your configuration
-        final String uname = resolveProperty("mbxcheck.mail.user");
-        final String pwd = resolveProperty("mbxcheck.mail.pwd");
+        final String uname = propertyResolver.resolveProperty("mbxcheck.mail.user");
+        final String pwd = propertyResolver.resolveProperty("mbxcheck.mail.pwd");
 
 
         //Create a Session object & authenticate uid and pwd
-        Session sessionobj = Session.getInstance(this.properties,
+        Session sessionobj = Session.getInstance(propertyResolver.getProperties(),
                 new javax.mail.Authenticator() {
                     protected PasswordAuthentication getPasswordAuthentication() {
                         return new PasswordAuthentication(uname, pwd);
@@ -41,12 +40,12 @@ public class MailHandler {
             Message messageobj = new MimeMessage(sessionobj);
             messageobj.setFrom(new InternetAddress(sendrmailid));
             messageobj.setRecipients(Message.RecipientType.TO,InternetAddress.parse(destmailid));
-            String subject = resolveProperty("mbxcheck.subject.prefix");
+            String subject = propertyResolver.resolveProperty("mbxcheck.subject.prefix");
             ZonedDateTime now =  ZonedDateTime.now();
             subject += now.toString();
 
             messageobj.setSubject(subject);
-            messageobj.setText(resolveProperty("mbxcheck.message.content"));
+            messageobj.setText(propertyResolver.resolveProperty("mbxcheck.message.content"));
             //Now send the message
             Transport.send(messageobj);
             ExceptingEmail exceptingEmail = new ExceptingEmail(subject, now);
@@ -62,12 +61,12 @@ public class MailHandler {
 
         List<String> received = new ArrayList<>();
         try {
-            String hostval = resolveProperty("mbxcheck.pop3.host");
-            final String uname = resolveProperty("mbxcheck.mail.user");
-            final String pwd = resolveProperty("mbxcheck.mail.pwd");
+            String hostval = propertyResolver.resolveProperty("mbxcheck.pop3.host");
+            final String uname = propertyResolver.resolveProperty("mbxcheck.mail.user");
+            final String pwd = propertyResolver.resolveProperty("mbxcheck.mail.pwd");
             //Set property values
 
-            Session emailSessionObj = Session.getDefaultInstance(this.properties);
+            Session emailSessionObj = Session.getDefaultInstance(propertyResolver.getProperties());
             //Create POP3 store object and connect with the server
             Store storeObj = emailSessionObj.getStore("pop3s");
 
@@ -92,7 +91,7 @@ public class MailHandler {
             }
 
             //Now close all the objects
-            emailFolderObj.close(Boolean.valueOf(resolveProperty("mbxcheck.mail.expunge")));
+            emailFolderObj.close(Boolean.valueOf(propertyResolver.resolveProperty("mbxcheck.mail.expunge")));
             storeObj.close();
 
             return received;
@@ -103,16 +102,6 @@ public class MailHandler {
 
     }
 
-    private String resolveProperty(String key) throws Exception {
-        if (properties == null ) {
-            throw new Exception("No properties");
 
-        }
-        String value = (String) this.properties.get(key);
-        if (StringUtils.isEmpty(value))  {
-            throw new Exception("No value found for " + key);
-        }
-        return value;
-    }
 
 }
