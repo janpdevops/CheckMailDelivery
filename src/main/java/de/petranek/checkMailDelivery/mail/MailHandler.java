@@ -17,10 +17,29 @@ public class MailHandler {
         this.propertyResolver = propertyResolver;
     }
 
-
-    public ExceptingEmail sendEMail() throws Exception{
-//Declare recipient's & sender's e-mail id.
+    public ExceptingEmail sendTestEMail() throws Exception {
         String destmailid = propertyResolver.resolveProperty("mbxcheck.receiver");
+        String subject = propertyResolver.resolveProperty("mbxcheck.subject.prefix");
+        ZonedDateTime now =  ZonedDateTime.now();
+        subject += now.toString();
+
+        ExceptingEmail exceptingEmail = new ExceptingEmail(subject, now);
+        String content = propertyResolver.resolveProperty("mbxcheck.message.content");
+        sendEMail(destmailid, content , subject);
+        return exceptingEmail;
+    }
+
+    public void sendAlertEMail(String content, String subject) throws Exception {
+        String destmailid = propertyResolver.resolveProperty("mbxcheck.alert.receiver");
+        ZonedDateTime now =  ZonedDateTime.now();
+        content += "\nSent on " +  now.toString();
+        sendEMail(destmailid, content , subject);
+
+    }
+
+    public void sendEMail(String destmailid, String content, String subject) throws Exception{
+//Declare recipient's & sender's e-mail id.
+
         String sendrmailid = propertyResolver.resolveProperty("mbxcheck.mail.user");
         //Mention user name and password as per your configuration
         final String uname = propertyResolver.resolveProperty("mbxcheck.mail.user");
@@ -40,17 +59,15 @@ public class MailHandler {
             Message messageobj = new MimeMessage(sessionobj);
             messageobj.setFrom(new InternetAddress(sendrmailid));
             messageobj.setRecipients(Message.RecipientType.TO,InternetAddress.parse(destmailid));
-            String subject = propertyResolver.resolveProperty("mbxcheck.subject.prefix");
-            ZonedDateTime now =  ZonedDateTime.now();
-            subject += now.toString();
+
 
             messageobj.setSubject(subject);
-            messageobj.setText(propertyResolver.resolveProperty("mbxcheck.message.content"));
+            messageobj.setText(content);
             //Now send the message
             Transport.send(messageobj);
-            ExceptingEmail exceptingEmail = new ExceptingEmail(subject, now);
+
             System.out.println("Your email sent successfully...." + subject);
-            return exceptingEmail;
+
         } catch (MessagingException exp) {
             throw new Exception(exp);
         }

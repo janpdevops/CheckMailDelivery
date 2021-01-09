@@ -5,10 +5,9 @@ import de.petranek.checkMailDelivery.monitoring.ExceptingEmail;
 import de.petranek.checkMailDelivery.monitoring.ExpectationStore;
 import de.petranek.checkMailDelivery.utils.PropertyResolver;
 
-import java.io.File;
-import java.io.FileReader;
+
 import java.util.List;
-import java.util.Properties;
+
 
 public class CheckMailDelivery {
 
@@ -30,9 +29,11 @@ public class CheckMailDelivery {
         ExpectationStore expectationStore = new ExpectationStore();
 
         MailHandler mailHandler = new MailHandler(propertyResolver);
-        ExceptingEmail sent = mailHandler.sendEMail();
+        ExceptingEmail sent = mailHandler.sendTestEMail();
         expectationStore.mailHasBeenSend(sent);
-        Thread.sleep(30*1000);
+
+        int delay = Integer.valueOf(propertyResolver.resolveProperty("mbxcheck.mail.delay"));
+        Thread.sleep(delay*1000);
         List<String> mails = mailHandler.getEmail();
 
         for (String header: mails) {
@@ -44,7 +45,10 @@ public class CheckMailDelivery {
         }
 
         if (expectationStore.openItemCount() > 0 ) {
-            System.out.println("We still expect " + expectationStore.openItemCount() + " mails!");
+            String message = "We still expect " + expectationStore.openItemCount() + " mails!";
+            System.out.println(message);
+            mailHandler.sendAlertEMail(message, "CheckMailDelivery Alert!");
+
         } else {
             System.out.println("All mails have been received.");
         }
