@@ -20,13 +20,13 @@
         <!-- required for java > 1.5 -->
 
 
-        <!-- https://mvnrepository.com/artifact/javax.mail/javax.mail-api -->
-        <dependency>
-            <groupId>javax.mail</groupId>
-            <artifactId>javax.mail-api</artifactId>
-            <version>1.6.2</version>
-        </dependency>
-
+      <!-- https://mvnrepository.com/artifact/javax.mail/javax.mail-api -->
+        <!--         <dependency>
+                   <groupId>javax.mail</groupId>
+                   <artifactId>javax.mail-api</artifactId>
+                   <version>1.6.2</version>
+               </dependency>
+       -->
         <!-- https://mvnrepository.com/artifact/com.sun.mail/javax.mail -->
         <dependency>
             <groupId>com.sun.mail</groupId>

@@ -14,17 +14,18 @@ public class CheckMailDelivery {
     public static void main (String [] args)  {
 
         try {
+
             CheckMailDelivery checkMailDelivery = new CheckMailDelivery();
-            checkMailDelivery.start();
+            checkMailDelivery.start(args[0]);
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    private void start() throws Exception {
+    private void start(String propertyFile) throws Exception {
         init();
 
-        PropertyResolver propertyResolver = new PropertyResolver("etc/mail.properties");
+        PropertyResolver propertyResolver = new PropertyResolver(propertyFile);
 
         ExpectationStore expectationStore = new ExpectationStore();
 
